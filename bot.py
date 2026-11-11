@@ -33,7 +33,7 @@ def get_market_state():
     return "CLOSED"
 
 def ottieni_tutti_componenti_sp500():
-    """Dizionario interno completo di tutti i componenti dello S&P 500."""
+    """Dizionario pulito e formattato di tutti i componenti dello S&P 500."""
     return {
         "MMM": "3M Company", "AOS": "A.O. Smith Corporation", "ABT": "Abbott Laboratories", "ABBV": "AbbVie Inc.",
         "ACN": "Accenture plc", "ADBE": "Adobe Inc.", "AMD": "Advanced Micro Devices, Inc.", "AES": "AES Corporation",
@@ -112,174 +112,188 @@ def ottieni_tutti_componenti_sp500():
         "IPG": "The Interpublic Group of Companies, Inc.", "INTU": "Intuit Inc.", "ISRG": "Intuitive Surgical, Inc.",
         "IVZ": "Invesco Ltd.", "INVH": "Invitation Homes Inc.", "IQV": "IQVIA Holdings Inc.", "IRM": "Iron Mountain Incorporated",
         "JBHT": "J.B. Hunt Transport Services, Inc.", "JBL": "Jabil Inc.", "JKHY": "Jack Henry & Associates, Inc.",
+        "J": "Jacobs Solutions Inc.", "SJM": "The J.M. Smucker Company", "JNJ": "Johnson & Johnson",
+        "JCI": "Johnson Controls International plc", "JPM": "JPMorgan Chase & Co.", "JNPR": "Juniper Networks, Inc.",
+        "K": "Kellanova", "KVUE": "Kenvue Inc.", "KEY": "KeyCorp", "KEYS": "Keysight Technologies, Inc.",
+        "KMB": "Kimberly-Clark Corporation", "KIM": "Kimco Realty Corporation", "KMI": "Kinder Morgan, Inc.",
+        "KLAC": "KLA Corporation", "KHC": "The Kraft Heinz Company", "KR": "The Kroger Co.", "LHX": "L3Harris Technologies, Inc.",
+        "LH": "Labcorp Holdings Inc.", "LRCX": "Lam Research Corporation", "LW": "Lamb Weston Holdings, Inc.",
+        "LVS": "Las Vegas Sands Corp.", "LDOS": "Leidos Holdings, Inc.", "LEN": "Lennar Corporation",
+        "LIN": "Linde plc", "LYV": "Live Nation Entertainment, Inc.", "LKQ": "LKQ Corporation", "LMT": "Lockheed Martin Corporation",
+        "L": "Loews Corporation", "LOW": "Lowe's Companies, Inc.", "LULU": "Lululemon Athletica Inc.",
+        "LYB": "LyondellBasell Industries N.V.", "MTB": "M&T Bank Corporation", "MRO": "Marathon Oil Corporation",
+        "MPC": "Marathon Petroleum Corporation", "MKTX": "MarketAxess Holdings Inc.", "MAR": "Marriott International, Inc.",
+        "MMC": "Marsh & McLennan Companies, Inc.", "MLM": "Martin Marietta Materials, Inc.", "MAS": "Masco Corporation",
+        "MA": "Mastercard Incorporated", "MTCH": "Match Group, Inc.", "MAT": "Mattel, Inc.", "MKC": "McCormick & Company, Incorporated",
+        "MCD": "McDonald's Corporation", "MCK": "McKesson Corporation", "MDT": "Medtronic plc", "MRK": "Merck & Co., Inc.",
+        "META": "Meta Platforms, Inc.", "MET": "MetLife, Inc.", "MTD": "Mettler-Toledo International Inc.",
+        "MGM": "MGM Resorts International", "MCHP": "Microchip Technology Incorporated", "MU": "Micron Technology, Inc.",
+        "MSFT": "Microsoft Corporation", "MAA": "Mid-America Apartment Communities, Inc.", "MRNA": "Moderna, Inc.",
+        "MHK": "Mohawk Industries, Inc.", "MOH": "Molina Healthcare, Inc.", "TAP": "Molson Coors Beverage Company",
+        "MDLZ": "Mondelez International, Inc.", "MPWR": "Monolithic Power Systems, Inc.", "MNST": "Monster Beverage Corporation",
+        "MCO": "Moody's Corporation", "MS": "Morgan Stanley", "MOS": "The Mosaic Company", "MSI": "Motorola Solutions, Inc.",
+        "MSCI": "MSCI Inc.", "NDAQ": "Nasdaq, Inc.", "NTAP": "NetApp, Inc.", "NFLX": "Netflix, Inc.", "NEM": "Newmont Corporation",
+        "NWSA": "News Corporation (Class A)", "NWS": "News Corporation (Class B)", "NEE": "NextEra Energy, Inc.",
+        "NKE": "NIKE, Inc.", "NI": "NiSource Inc.", "NDSN": "Nordson Corporation", "NSC": "Norfolk Southern Corporation",
+        "NTRS": "Northern Trust Corporation", "NOC": "Northrop Grumman Corporation", "NCLH": "Norwegian Cruise Line Holdings Ltd.",
+        "NRG": "NRG Energy, Inc.", "NUE": "Nucor Corporation", "NVDA": "NVIDIA Corporation", "NVR": "NVR, Inc.",
+        "NXPI": "NXP Semiconductors N.V.", "ORLY": "O'Reilly Automotive, Inc.", "OXY": "Occidental Petroleum Corporation",
+        "ODFL": "Old Dominion Freight Line, Inc.", "OMC": "Omnicom Group Inc.", "ON": "ON Semiconductor",
+        "OKE": "ONEOK, Inc.", "ORCL": "Oracle Corporation", "OTIS": "Otis Worldwide Corporation", "PCAR": "PACCAR Inc.",
+        "PKG": "Packaging Corporation of America", "PANW": "Palo Alto Networks, Inc.", "PARA": "Paramount Global",
+        "PH": "Parker-Hannifin Corporation", "PAYX": "Paychex, Inc.", "PAYC": "Paycom Software, Inc.", "PYPL": "PayPal Holdings, Inc.",
+        "PNR": "Pentair plc", "PEP": "PepsiCo, Inc.", "PFE": "Pfizer Inc.", "PCG": "PG&E Corporation", "PM": "Philip Morris International Inc.",
+        "PSX": "Phillips 66", "PNW": "Pinnacle West Capital Corporation", "PGR": "The Progressive Corporation",
+        "PLD": "Prologis, Inc.", "PRU": "Prudential Financial, Inc.", "PEG": "Public Service Enterprise Group Incorporated",
+        "PTC": "PTC Inc.", "PSA": "Public Storage", "PHM": "PulteGroup, Inc.", "QRVO": "Qorvo, Inc.",
+        "QCOM": "QUALCOMM Incorporated", "PWR": "Quanta Services, Inc.", "DGX": "Quest Diagnostics Incorporated",
+        "RL": "Ralph Lauren Corporation", "RJF": "Raymond James Financial, Inc.", "RTX": "RTX Corporation",
+        "O": "Realty Income Corporation", "REG": "Regency Centers Corporation", "REGN": "Regeneron Pharmaceuticals, Inc.",
+        "RF": "Regions Financial Corporation", "RSG": "Republic Services, Inc.", "RMD": "ResMed Inc.",
+        "RHI": "Robert Half Inc.", "ROK": "Rockwell Automation, Inc.", "ROL": "Rollins, Inc.",
+        "ROP": "Roper Technologies, Inc.", "ROST": "Ross Stores, Inc.", "RCL": "Royal Caribbean Cruises Ltd.",
+        "SPGI": "S&P Global Inc.", "CRM": "Salesforce, Inc.", "SBAC": "SBA Communications Corporation",
+        "SLB": "Schlumberger Limited", "STX": "Seagate Technology Holdings plc", "SEE": "Sealed Air Corporation",
+        "SRE": "Sempra Energy", "NOW": "ServiceNow, Inc.", "SHW": "The Sherwin-Williams Company", "SPG": "Simon Property Group, Inc.",
+        "SWKS": "Skyworks Solutions, Inc.", "SNA": "Snap-on Incorporated",
+        "SOLV": "Solventum Corp.", "SO": "The Southern Company", "LUV": "Southwest Airlines Co.", "SWK": "Stanley Black & Decker, Inc.",
+        "SBUX": "Starbucks Corporation", "STT": "State Street Corporation", "STV": "STMicroelectronics N.V.",
+        "STK": "Stryker Corporation", "SMCI": "Super Micro Computer, Inc.", "SYF": "Synchrony Financial",
+        "SNPS": "Synopsys, Inc.", "SYY": "Sysco Corporation", "TMUS": "T-Mobile US, Inc.", "TROW": "T. Rowe Price Group, Inc.",
+        "TTWO": "Take-Two Interactive Software, Inc.", "TPR": "Tapestry, Inc.", "TRGP": "Targa Resources Corp.",
+        "TGT": "Target Corporation", "TEL": "TE Connectivity plc", "FTI": "TechnipFMC plc", "TDY": "Teledyne Technologies Incorporated",
+        "TFX": "Teleflex Incorporated", "TER": "Teradyne, Inc.", "TSLA": "Tesla, Inc.", "TXN": "Texas Instruments Incorporated",
+        "TXT": "Textron Inc.", "TMO": "Thermo Fisher Scientific Inc.", "TJX": "The TJX Companies, Inc.", "TSCO": "Tractor Supply Company",
+        "TT": "Trane Technologies plc", "TDG": "TransDigm Group Incorporated", "TRV": "The Travelers Companies, Inc.",
+        "TRMB": "Trimble Inc.", "TFC": "Truist Financial Corporation", "TYL": "Tyler Technologies, Inc.", "TSN": "Tyson Foods, Inc.",
+        "USB": "U.S. Bancorp", "UBER": "Uber Technologies, Inc.", "UDR": "UDR, Inc.", "ULTA": "Ulta Beauty, Inc.",
+        "UNP": "Union Pacific Corporation", "UAL": "United Airlines Holdings, Inc.", "UPS": "United Parcel Service, Inc.",
+        "URI": "United Rentals, Inc.", "UNH": "UnitedHealth Group Incorporated", "VLO": "Valero Energy Corporation",
+        "VTR": "Ventas, Inc.", "VRSN": "Verisign, Inc.", "VRSK": "Verisk Analytics, Inc.", "VZ": "Verizon Communications Inc.",
+        "VRTX": "Vertex Pharmaceuticals Incorporated", "VFC": "V.F. Corporation", "VTRS": "Viatris Inc.",
+        "VICI": "VICI Properties Inc.", "V": "Visa Inc.", "VMC": "Vulcan Materials Company", "WRB": "W.R. Berkley Corporation",
+        "WAB": "Westinghouse Air Brake Technologies Corporation", "WMT": "Walmart Inc.", "DIS": "The Walt Disney Company",
+        "WBD": "Warner Bros. Discovery, Inc.", "WM": "Waste Management, Inc.", "WAT": "Waters Corporation",
+        "WEC": "WEC Energy Group, Inc.", "WFC": "Wells Fargo & Company", "WELL": "Welltower Inc.", "WST": "West Pharmaceutical Services, Inc.",
+        "WDC": "Western Digital Corporation", "WY": "Weyerhaeuser Company", "WHR": "Whirlpool Corporation",
+        "WMB": "Williams Companies, Inc.", "WTW": "Willis Towers Watson Public Limited Company", "WYNN": "Wynn Resorts, Limited",
+        "XEL": "Xcel Energy Inc.", "XYL": "Xylem Inc.", "YUM": "Yum! Brands, Inc.", "ZBRA": "Zebra Technologies Corporation",
+        "ZBH": "Zimmer Biomet Holdings, Inc.", "ZTS": "Zoetis Inc."
+    }
 
-"J": "Jacobs Solutions Inc.", "SJM": "The J.M. Smucker Company", "JNJ": "Johnson & Johnson",
-"JCI": "Johnson Controls International plc", "JPM": "JPMorgan Chase & Co.", "JNPR": "Juniper Networks, Inc.",
-"K": "Kellanova", "KVUE": "Kenvue Inc.", "KEY": "KeyCorp", "KEYS": "Keysight Technologies, Inc.",
-"KMB": "Kimberly-Clark Corporation", "KIM": "Kimco Realty Corporation", "KMI": "Kinder Morgan, Inc.",
-"KLAC": "KLA Corporation", "KHC": "The Kraft Heinz Company", "KR": "The Kroger Co.", "LHX": "L3Harris Technologies, Inc.",
-"LH": "Labcorp Holdings Inc.", "LRCX": "Lam Research Corporation", "LW": "Lamb Weston Holdings, Inc.",
-"LVS": "Las Vegas Sands Corp.", "LDOS": "Leidos Holdings, Inc.", "LEN": "Lennar Corporation",
-"LIN": "Linde plc", "LYV": "Live Nation Entertainment, Inc.", "LKQ": "LKQ Corporation", "LMT": "Lockheed Martin Corporation",
-"L": "Loews Corporation", "LOW": "Lowe's Companies, Inc.", "LULU": "Lululemon Athletica Inc.",
-"LYB": "LyondellBasell Industries N.V.", "MTB": "M&T Bank Corporation", "MRO": "Marathon Oil Corporation",
-"MPC": "Marathon Petroleum Corporation", "MKTX": "MarketAxess Holdings Inc.", "MAR": "Marriott International, Inc.",
-"MMC": "Marsh & McLennan Companies, Inc.", "MLM": "Martin Marietta Materials, Inc.", "MAS": "Masco Corporation",
-"MA": "Mastercard Incorporated", "MTCH": "Match Group, Inc.", "MAT": "Mattel, Inc.", "MKC": "McCormick & Company, Incorporated",
-"MCD": "McDonald's Corporation", "MCK": "McKesson Corporation", "MDT": "Medtronic plc", "MRK": "Merck & Co., Inc.",
-"META": "Meta Platforms, Inc.", "MET": "MetLife, Inc.", "MTD": "Mettler-Toledo International Inc.",
-"MGM": "MGM Resorts International", "MCHP": "Microchip Technology Incorporated", "MU": "Micron Technology, Inc.",
-"MSFT": "Microsoft Corporation", "MAA": "Mid-America Apartment Communities, Inc.", "MRNA": "Moderna, Inc.",
-"MHK": "Mohawk Industries, Inc.", "MOH": "Molina Healthcare, Inc.", "TAP": "Molson Coors Beverage Company",
-"MDLZ": "Mondelez International, Inc.", "MPWR": "Monolithic Power Systems, Inc.", "MNST": "Monster Beverage Corporation",
-"MCO": "Moody's Corporation", "MS": "Morgan Stanley", "MOS": "The Mosaic Company", "MSI": "Motorola Solutions, Inc.",
-"MSCI": "MSCI Inc.", "NDAQ": "Nasdaq, Inc.", "NTAP": "NetApp, Inc.", "NFLX": "Netflix, Inc.", "NEM": "Newmont Corporation",
-"NWSA": "News Corporation (Class A)", "NWS": "News Corporation (Class B)", "NEE": "NextEra Energy, Inc.",
-"NKE": "NIKE, Inc.", "NI": "NiSource Inc.", "NDSN": "Nordson Corporation", "NSC": "Norfolk Southern Corporation",
-"NTRS": "Northern Trust Corporation", "NOC": "Northrop Grumman Corporation", "NCLH": "Norwegian Cruise Line Holdings Ltd.",
-"NRG": "NRG Energy, Inc.", "NUE": "Nucor Corporation", "NVDA": "NVIDIA Corporation", "NVR": "NVR, Inc.",
-"NXPI": "NXP Semiconductors N.V.", "ORLY": "O'Reilly Automotive, Inc.", "OXY": "Occidental Petroleum Corporation",
-"ODFL": "Old Dominion Freight Line, Inc.", "OMC": "Omnicom Group Inc.", "ON": "ON Semiconductor",
-"OKE": "ONEOK, Inc.", "ORCL": "Oracle Corporation", "OTIS": "Otis Worldwide Corporation", "PCAR": "PACCAR Inc.",
-"PKG": "Packaging Corporation of America", "PANW": "Palo Alto Networks, Inc.", "PARA": "Paramount Global",
-"PH": "Parker-Hannifin Corporation", "PAYX": "Paychex, Inc.", "PAYC": "Paycom Software, Inc.", "PYPL": "PayPal Holdings, Inc.",
-"PNR": "Pentair plc", "PEP": "PepsiCo, Inc.", "PFE": "Pfizer Inc.", "PCG": "PG&E Corporation", "PM": "Philip Morris International Inc.",
-"PSX": "Phillips 66", "PNW": "Pinnacle West Capital Corporation", "PGR": "The Progressive Corporation",
-"PLD": "Prologis, Inc.", "PRU": "Prudential Financial, Inc.", "PEG": "Public Service Enterprise Group Incorporated",
-"PTC": "PTC Inc.", "PSA": "Public Storage", "PHM": "PulteGroup, Inc.", "QRVO": "Qorvo, Inc.",
-"QCOM": "QUALCOMM Incorporated", "PWR": "Quanta Services, Inc.", "DGX": "Quest Diagnostics Incorporated",
-"RL": "Ralph Lauren Corporation", "RJF": "Raymond James Financial, Inc.", "RTX": "RTX Corporation",
-"O": "Realty Income Corporation", "REG": "Regency Centers Corporation", "REGN": "Regeneron Pharmaceuticals, Inc.",
-"RF": "Regions Financial Corporation", "RSG": "Republic Services, Inc.", "RMD": "ResMed Inc.",
-"RHI": "Robert Half Inc.", "ROK": "Rockwell Automation, Inc.", "ROL": "Rollins, Inc.",
-"ROP": "Roper Technologies, Inc.", "ROST": "Ross Stores, Inc.", "RCL": "Royal Caribbean Cruises Ltd.",
-"SPGI": "S&P Global Inc.", "CRM": "Salesforce, Inc.", "SBAC": "SBA Communications Corporation",
-"SLB": "Schlumberger Limited", "STX": "Seagate Technology Holdings plc", "SEE": "Sealed Air Corporation",
-"SRE": "Sempra Energy", "NOW": "ServiceNow, Inc.", "SHW": "The Sherwin-Williams Company", "SPG": "Simon Property Group, Inc.",
-"SWKS": "Skyworks Solutions, Inc.", "SJM": "The J.M. Smucker Company", "SNA": "Snap-on Incorporated",
-"SOLV": "Solventum Corp.", "SO": "The Southern Company", "LUV": "Southwest Airlines Co.", "SWK": "Stanley Black & Decker, Inc.",
-"SBUX": "Starbucks Corporation", "STT": "State Street Corporation", "STV": "STMicroelectronics N.V.",
-"STK": "Stryker Corporation", "SMCI": "Super Micro Computer, Inc.", "SYF": "Synchrony Financial",
-"SNPS": "Synopsys, Inc.", "SYY": "Sysco Corporation", "TMUS": "T-Mobile US, Inc.", "TROW": "T. Rowe Price Group, Inc.",
-"TTWO": "Take-Two Interactive Software, Inc.", "TPR": "Tapestry, Inc.", "TRGP": "Targa Resources Corp.",
-"TGT": "Target Corporation", "TEL": "TE Connectivity plc", "FTI": "TechnipFMC plc", "TDY": "Teledyne Technologies Incorporated",
-"TFX": "Teleflex Incorporated", "TER": "Teradyne, Inc.", "TSLA": "Tesla, Inc.", "TXN": "Texas Instruments Incorporated",
-"TXT": "Textron Inc.", "TMO": "Thermo Fisher Scientific Inc.", "TJX": "The TJX Companies, Inc.", "TSCO": "Tractor Supply Company",
-"TT": "Trane Technologies plc", "TDG": "TransDigm Group Incorporated", "TRV": "The Travelers Companies, Inc.",
-"TRMB": "Trimble Inc.", "TFC": "Truist Financial Corporation", "TYL": "Tyler Technologies, Inc.", "TSN": "Tyson Foods, Inc.",
-"USB": "U.S. Bancorp", "UBER": "Uber Technologies, Inc.", "UDR": "UDR, Inc.", "ULTA": "Ulta Beauty, Inc.",
-"UNP": "Union Pacific Corporation", "UAL": "United Airlines Holdings, Inc.", "UPS": "United Parcel Service, Inc.",
-"URI": "United Rentals, Inc.", "UNH": "UnitedHealth Group Incorporated", "VLO": "Valero Energy Corporation",
-"VTR": "Ventas, Inc.", "VRSN": "Verisign, Inc.", "VRSK": "Verisk Analytics, Inc.", "VZ": "Verizon Communications Inc.",
-"VRTX": "Vertex Pharmaceuticals Incorporated", "VFC": "V.F. Corporation", "VTRS": "Viatris Inc.",
-"VICI": "VICI Properties Inc.", "V": "Visa Inc.", "VMC": "Vulcan Materials Company", "WRB": "W.R. Berkley Corporation",
-"WAB": "Westinghouse Air Brake Technologies Corporation", "WMT": "Walmart Inc.", "DIS": "The Walt Disney Company",
-"WBD": "Warner Bros. Discovery, Inc.", "WM": "Waste Management, Inc.", "WAT": "Waters Corporation",
-"WEC": "WEC Energy Group, Inc.", "WFC": "Wells Fargo & Company", "WELL": "Welltower Inc.", "WST": "West Pharmaceutical Services, Inc.",
-"WDC": "Western Digital Corporation", "WY": "Weyerhaeuser Company", "WHR": "Whirlpool Corporation",
-"WMB": "Williams Companies, Inc.", "WTW": "Willis Towers Watson Public Limited Company", "WYNN": "Wynn Resorts, Limited",
-"XEL": "Xcel Energy Inc.", "XYL": "Xylem Inc.", "YUM": "Yum! Brands, Inc.", "ZBRA": "Zebra Technologies Corporation",
-"ZBH": "Zimmer Biomet Holdings, Inc.", "ZTS": "Zoetis Inc."
-}
 def monitora_mercato():
-stato_mercato = get_market_state()
-if stato_mercato == "CLOSED":
-tz_ny = zoneinfo.ZoneInfo("America/New_York")
-ora_ny = datetime.datetime.now(tz_ny).strftime("%H:%M")
-print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario attuale NY: {ora_ny}")
-return
-print(f"Rilevata sessione: {stato_mercato}. Avvio scansione asincrona su 500 titoli...")
-ticker_nomi = ottieni_tutti_componenti_sp500()
-tickers_list = list(ticker_nomi.keys())
-# Esegue lo scaricamento di massa in parallelo via thread
-t = Ticker(tickers_list, asynchronous=True)
-try:
-quotes = t.quotes
-except Exception as e:
-print(f"ERRORE nel recupero dati dalle API: {e}")
-return
-if not quotes or len(quotes) == 0:
-print("ERRORE: Risposta vuota dalle API.")
-return
-all_data = []
-for ticker in tickers_list:
-data_ticker = quotes.get(ticker)
-if isinstance(data_ticker, dict):
-try:
-if stato_mercato == "PRE_MARKET":
-variazione = data_ticker.get("preMarketChangePercent", data_ticker.get("regularMarketChangePercent", 0))
-prezzo = data_ticker.get("preMarketPrice", data_ticker.get("regularMarketPrice", 0))
-else:
-variazione = data_ticker.get("regularMarketChangePercent", 0)
-prezzo = data_ticker.get("regularMarketPrice", 0)
-if variazione is None or prezzo is None:
-continue
-all_data.append({
-"ticker": ticker,
-"nome": ticker_nomi.get(ticker, ticker),
-"variazione": variazione,
-"prezzo": prezzo,
-"market_cap": data_ticker.get("marketCap", 0)
-})
-except Exception:
-continue
-df_risultati = pd.DataFrame(all_data)
-if df_risultati.empty:
-print("Nessun dato utile estratto dai titoli.")
-return
-# Filtra per la perdita del 5%
-df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
-if df_filtrato.empty:
-print(f"Nessun titolo perde più del {abs(SOGLIA_PERDITA)}%. Invio notifica di vuoto...")
-invia_report_vuoto(stato_mercato)
-return
-# Ordina per capitalizzazione (decrescente) e poi per magnitudo del ribasso
-df_final = df_filtrato.sort_values(by=["market_cap", "variazione"], ascending=[False, True])
-invia_report_telegram(df_final, stato_mercato)
+    stato_mercato = get_market_state()
+    if stato_mercato == "CLOSED":
+        tz_ny = zoneinfo.ZoneInfo("America/New_York")
+        ora_ny = datetime.datetime.now(tz_ny).strftime("%H:%M")
+        print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario attuale NY: {ora_ny}")
+        return
+    
+    print(f"Rilevata sessione: {stato_mercato}. Avvio scansione asincrona su 500 titoli...")
+    ticker_nomi = ottieni_tutti_componenti_sp500()
+    tickers_list = list(ticker_nomi.keys())
+    t = Ticker(tickers_list, asynchronous=True)
+    
+    try:
+        quotes = t.quotes
+    except Exception as e:
+        print(f"ERRORE nel recupero dati dalle API: {e}")
+        return
+        
+    if not quotes or len(quotes) == 0:
+        print("ERRORE: Risposta vuota dalle API.")
+        return
+        
+    all_data = []
+    for ticker in tickers_list:
+        data_ticker = quotes.get(ticker)
+        if isinstance(data_ticker, dict):
+            try:
+                if stato_mercato == "PRE_MARKET":
+                    variazione = data_ticker.get("preMarketChangePercent", data_ticker.get("regularMarketChangePercent", 0))
+                    prezzo = data_ticker.get("preMarketPrice", data_ticker.get("regularMarketPrice", 0))
+                else:
+                    variazione = data_ticker.get("regularMarketChangePercent", 0)
+                    prezzo = data_ticker.get("regularMarketPrice", 0)
+                    
+                if variazione is None or prezzo is None:
+                    continue
+                    
+                all_data.append({
+                    "ticker": ticker,
+                    "nome": ticker_nomi.get(ticker, ticker),
+                    "variazione": variazione,
+                    "prezzo": prezzo,
+                    "market_cap": data_ticker.get("marketCap", 0)
+                })
+            except Exception:
+                continue
+                
+    df_risultati = pd.DataFrame(all_data)
+    if df_risultati.empty:
+        print("Nessun dato utile estratto dai titoli.")
+        return
+        
+    df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
+    if df_filtrato.empty:
+        print(f"Nessun titolo perde più del {abs(SOGLIA_PERDITA)}%. Invio notifica di vuoto...")
+        invia_report_vuoto(stato_mercato)
+        return
+        
+    df_final = df_filtrato.sort_values(by=["market_cap", "variazione"], ascending=[False, True])
+    invia_report_telegram(df_final, stato_mercato)
+
 def formatta_market_cap(valore):
-if not valore: return "N/D"
-if valore >= 1e12: return f"${valore / 1e12:.1f}T"
-elif valore >= 1e9: return f"${valore / 1e9:.1f}B"
-elif valore >= 1e6: return f"${valore / 1e6:.1f}M"
-return "N/D"
+    if not valore: 
+        return "N/D"
+    if valore >= 1e12: 
+        return f"${valore / 1e12:.1f}T"
+    elif valore >= 1e9: 
+        return f"${valore / 1e9:.1f}B"
+    elif valore >= 1e6: 
+        return f"${valore / 1e6:.1f}M"
+    return "N/D"
+
 def invia_report_vuoto(stato_mercato):
-tz_ny = zoneinfo.ZoneInfo("America/New_York")
-orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
-tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
-messaggio = f"🚨 {tipo_alert} MONITOR ({orario} NY) 🚨\n"
-messaggio += f"Filtro: Tutti i 500 titoli S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
-messaggio += "___________________________________\n\n"
-messaggio += "ℹ️ Nessun titolo identificato\n"
-invia_a_telegram(messaggio)
+    tz_ny = zoneinfo.ZoneInfo("America/New_York")
+    orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
+    tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
+    messaggio = f"🚨 {tipo_alert} MONITOR ({orario} NY) 🚨\n"
+    messaggio += f"Filtro: Tutti i 500 titoli S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
+    messaggio += "___________________________________\n\n"
+    messaggio += "ℹ️ Nessun titolo identificato\n"
+    invia_a_telegram(messaggio)
+
 def invia_report_telegram(df, stato_mercato):
-tz_ny = zoneinfo.ZoneInfo("America/New_York")
-orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
-tipo_alert = "PRE-MARKET DUMP" if stato_mercato == "PRE_MARKET" else "MARKET DUMP"
-messaggio = f"🚨 {tipo_alert} ALERT ({orario} NY) 🚨\n"
-messaggio += f"Titoli in calo oltre il {abs(SOGLIA_PERDITA)}% ordinati per Market Cap:\n"
-messaggio += "___________________________________\n\n"
-for _, row in df.iterrows():
-cap_formattata = formatta_market_cap(row["market_cap"])
-messaggio += f"🔹 {row['ticker']} | {row['nome']}\n"
-messaggio += f"📉 Variazione: {row['variazione']:.2f}%\n"
-messaggio += f"💵 Prezzo attuale: ${row['prezzo']:.2f}\n"
-messaggio += f"🏢 Market Cap: {cap_formattata}\n"
-messaggio += "-----------------------------------\n"
-invia_a_telegram(messaggio)
+    tz_ny = zoneinfo.ZoneInfo("America/New_York")
+    orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
+    tipo_alert = "PRE-MARKET DUMP" if stato_mercato == "PRE_MARKET" else "MARKET DUMP"
+    messaggio = f"🚨 {tipo_alert} ALERT ({orario} NY) 🚨\n"
+    messaggio += f"Titoli in calo oltre il {abs(SOGLIA_PERDITA)}% ordinati per Market Cap:\n"
+    messaggio += "___________________________________\n\n"
+    for _, row in df.iterrows():
+        cap_formattata = formatta_market_cap(row["market_cap"])
+        messaggio += f"🔹 {row['ticker']} | {row['nome']}\n"
+        messaggio += f"📉 Variazione: {row['variazione']:.2f}%\n"
+        messaggio += f"💵 Prezzo attuale: ${row['prezzo']:.2f}\n"
+        messaggio += f"🏢 Market Cap: {cap_formattata}\n"
+        messaggio += "-----------------------------------\n"
+    invia_a_telegram(messaggio)
+
 def invia_a_telegram(testo):
-t_token = str(TOKEN_TELEGRAM).strip()
-c_id = str(CHAT_ID_TELEGRAM).strip()
-# Scomposizione per prevenire alterazioni da log masking di GitHub
-parti_url = ["https://", "api.", "telegram", ".org", "/bot", t_token, "/sendMessage"]
-url_completo = "".join(parti_url)
-payload = {"chat_id": c_id, "text": testo, "parse_mode": "HTML"}
-try:
-res = requests.post(url_completo, json=payload)
-if res.status_code != 200:
-print(f"Risposta server Telegram (Errore): {res.status_code} - {res.text}")
-else:
-print("Esecuzione completata correttamente. Messaggio inviato!")
-except Exception as e:
-print(f"Errore di invio: {e}")
-if name == "main":
-monitora_mercato()
+    t_token = str(TOKEN_TELEGRAM).strip()
+    c_id = str(CHAT_ID_TELEGRAM).strip()
+    parti_url = ["https://", "api.", "telegram", ".org", "/bot", t_token, "/sendMessage"]
+    url_completo = "".join(parti_url)
+    payload = {"chat_id": c_id, "text": testo, "parse_mode": "HTML"}
+    try:
+        res = requests.post(url_completo, json=payload)
+        if res.status_code != 200:
+            print(f"Risposta server Telegram (Errore): {res.status_code} - {res.text}")
+        else:
+            print("Esecuzione completata correttamente. Messaggio inviato!")
+    except Exception as e:
+        print(f"Errore di invio: {e}")
+
+if __name__ == "__main__":
+    monitora_mercato()

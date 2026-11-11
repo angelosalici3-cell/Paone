@@ -1,6 +1,7 @@
 import os
 import datetime
 import zoneinfo
+import io
 import pandas as pd
 import requests
 import yfinance as yf
@@ -11,37 +12,38 @@ CHAT_ID_TELEGRAM = os.getenv("TELEGRAM_CHAT_ID")
 SOGLIA_PERDITA = -5.0  
 
 def get_market_state():
-    """Rileva in modo infallibile lo stato del mercato di New York."""
+    """Rileva lo stato del mercato di New York."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     ora_ny = datetime.datetime.now(tz_ny)
 
-    # Fine settimana (Sabato = 5, Domenica = 6)
     if ora_ny.weekday() >= 5:
         return "CLOSED"
 
     ora_corrente = ora_ny.time()
     
-    # Orari limite
     inizio_pre = datetime.time(4, 0, 0)
     apertura_reg = datetime.time(9, 30, 0)
     chiusura_reg = datetime.time(16, 0, 0)
 
-    # Verifica Pre-Market (04:00 - 09:29:59)
     if inizio_pre <= ora_corrente < apertura_reg:
         return "PRE_MARKET"
     
-    # Verifica Sessione Regolare (09:30 - 16:00:00)
     if apertura_reg <= ora_corrente <= chiusura_reg:
         return "REGULAR"
     
     return "CLOSED"
 
 def ottieni_componenti_sp500():
+    """Scarica i componenti dello S&P 500 aggirando i warning di Pandas."""
     url = "https://wikipedia.org"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     req = requests.get(url, headers=headers)
-    tables = pd.read_html(req.text)
-    df = tables
+    
+    # Utilizziamo StringIO per evitare il FutureWarning di Pandas nelle nuove versioni
+    html_buffer = io.StringIO(req.text)
+    tables = pd.read_html(html_buffer, flavor='html5lib')
+    
+    df = tables[0]
     ticker_nomi = dict(zip(df["Symbol"], df["Security"]))
     tickers = [t.replace(".", "-") for t in df["Symbol"].tolist()]
     return tickers, ticker_nomi
@@ -78,7 +80,7 @@ def monitora_mercato():
     all_data = []
     for t in tickers:
         try:
-            if t not in dati_mercato.columns.levels:
+            if t not in dati_mercato.columns.levels[0]:
                 continue
                 
             ticker_data = dati_mercato[t]

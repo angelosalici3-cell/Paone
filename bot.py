@@ -11,7 +11,7 @@ CHAT_ID_TELEGRAM = os.getenv("TELEGRAM_CHAT_ID")
 SOGLIA_PERDITA = -5.0  
 
 def get_market_state():
-    """Rileva lo stato del mercato di New York (NYSE)."""
+    """Rileva lo stato del mercato di New York (NYSE/NASDAQ)."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     ora_ny = datetime.datetime.now(tz_ny)
 
@@ -32,9 +32,9 @@ def get_market_state():
     
     return "CLOSED"
 
-def ottieni_tutti_componenti_sp500():
-    """Dizionario pulito e formattato di tutti i componenti dello S&P 500."""
-    return {
+def ottieni_tutti_componenti():
+    """Dizionario combinato di S&P 500 e Nasdaq-100."""
+    sp500 = {
         "MMM": "3M Company", "AOS": "A.O. Smith Corporation", "ABT": "Abbott Laboratories", "ABBV": "AbbVie Inc.",
         "ACN": "Accenture plc", "ADBE": "Adobe Inc.", "AMD": "Advanced Micro Devices, Inc.", "AES": "AES Corporation",
         "AFL": "Aflac Incorporated", "A": "Agilent Technologies, Inc.", "APD": "Air Products and Chemicals, Inc.",
@@ -181,6 +181,54 @@ def ottieni_tutti_componenti_sp500():
         "ZBH": "Zimmer Biomet Holdings, Inc.", "ZTS": "Zoetis Inc."
     }
 
+    nasdaq = {
+        "AAPL": "Apple Inc.", "MSFT": "Microsoft Corporation", "AMZN": "Amazon.com, Inc.",
+        "NVDA": "NVIDIA Corporation", "GOOGL": "Alphabet Inc. (Class A)", "GOOG": "Alphabet Inc. (Class C)",
+        "META": "Meta Platforms, Inc.", "TSLA": "Tesla, Inc.", "AVGO": "Broadcom Inc.",
+        "COST": "Costco Wholesale Corporation", "NFLX": "Netflix, Inc.", "AMD": "Advanced Micro Devices, Inc.",
+        "TMUS": "T-Mobile US, Inc.", "LIN": "Linde plc", "INTU": "Intuit Inc.",
+        "AMGN": "Amgen Inc.", "QCOM": "QUALCOMM Incorporated", "HON": "Honeywell International Inc.",
+        "BKNG": "Booking Holdings Inc.", "ISRG": "Intuitive Surgical, Inc.", "AMAT": "Applied Materials, Inc.",
+        "ADI": "Analog Devices, Inc.", "VRTX": "Vertex Pharmaceuticals Incorporated", "SBUX": "Starbucks Corporation",
+        "MDLZ": "Mondelez International, Inc.", "GILD": "Gilead Sciences, Inc.", "LRCX": "Lam Research Corporation",
+        "PANW": "Palo Alto Networks, Inc.", "ADP": "Automatic Data Processing, Inc.", "MU": "Micron Technology, Inc.",
+        "SNPS": "Synopsys, Inc.", "CDNS": "Cadence Design Systems, Inc.", "PYPL": "PayPal Holdings, Inc.",
+        "REGN": "Regeneron Pharmaceuticals, Inc.", "CSCO": "Cisco Systems, Inc.", "MAR": "Marriott International, Inc.",
+        "MELI": "MercadoLibre, Inc.", "KLAC": "KLA Corporation", "ASML": "ASML Holding N.V.",
+        "MNST": "Monster Beverage Corporation", "ORLY": "O'Reilly Automotive, Inc.", "PDD": "PDD Holdings Inc.",
+        "ABNB": "Airbnb, Inc.", "CTAS": "Cintas Corporation", "ROP": "Roper Technologies, Inc.",
+        "ADSK": "Autodesk, Inc.", "DXCM": "DexCom, Inc.", "PCAR": "PACCAR Inc.",
+        "PAYX": "Paychex, Inc.", "LULU": "Lululemon Athletica Inc.", "CPRT": "Copart, Inc.",
+        "IDXX": "IDEXX Laboratories, Inc.", "EA": "Electronic Arts Inc.", "KDP": "Keurig Dr Pepper Inc.",
+        "EXC": "Exelon Corporation", "XEL": "Xcel Energy Inc.", "MRVL": "Marvell Technology, Inc.",
+        "CSX": "CSX Corporation", "ODFL": "Old Dominion Freight Line, Inc.", "FAST": "Fastenal Company",
+        "VRSK": "Verisk Analytics, Inc.", "BKR": "Baker Hughes Company", "GEHC": "GE HealthCare Technologies Inc.",
+        "ON": "ON Semiconductor", "TTD": "The Trade Desk, Inc.", "ANSS": "Ansys, Inc.",
+        "WBD": "Warner Bros. Discovery, Inc.", "CHTR": "Charter Communications, Inc.", "DLTR": "Dollar Tree, Inc.",
+        "ENPH": "Enphase Energy, Inc.", "EBAY": "eBay Inc.", "CTSH": "Cognizant Technology Solutions Corporation",
+        "MCHP": "Microchip Technology Incorporated", "TEAM": "Atlassian Corporation", "GFS": "GlobalFoundries Inc.",
+        "ZS": "Zscaler, Inc.", "ROST": "Ross Stores, Inc.", "BIIB": "Biogen Inc.",
+        "DDOG": "Datadog, Inc.", "CDW": "CDW Corporation", "ONB": "Old National Bancorp",
+        "TTWO": "Take-Two Interactive Software, Inc.", "ILMN": "Illumina, Inc.", "ALGN": "Align Technology, Inc.",
+        "ANET": "Arista Networks, Inc.", "SIRI": "Sirius XM Holdings Inc.", "CCEP": "Coca-Cola Europacific Partners PLC",
+        "FANG": "Diamondback Energy, Inc.", "APTV": "Aptiv plc", "CPAY": "Corpay, Inc.",
+        "WBA": "Walgreens Boots Alliance, Inc.", "ZBRA": "Zebra Technologies Corporation", "KHC": "The Kraft Heinz Company"
+    }
+
+    # Unisce i due dizionari ed etichetta l'indice
+    tutti_ticker = {}
+
+    for ticker, nome in sp500.items():
+        tutti_ticker[ticker] = {"nome": nome, "indice": "S&P 500"}
+
+    for ticker, nome in nasdaq.items():
+        if ticker in tutti_ticker:
+            tutti_ticker[ticker]["indice"] = "S&P 500 + NASDAQ"
+        else:
+            tutti_ticker[ticker] = {"nome": nome, "indice": "NASDAQ-100"}
+
+    return tutti_ticker
+
 def monitora_mercato():
     stato_mercato = get_market_state()
     if stato_mercato == "CLOSED":
@@ -189,9 +237,9 @@ def monitora_mercato():
         print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario attuale NY: {ora_ny}")
         return
     
-    print(f"Rilevata sessione: {stato_mercato}. Avvio scansione asincrona su 500 titoli...")
-    ticker_nomi = ottieni_tutti_componenti_sp500()
-    tickers_list = list(ticker_nomi.keys())
+    print(f"Rilevata sessione: {stato_mercato}. Avvio scansione asincrona su S&P 500 e Nasdaq-100...")
+    mappa_titoli = ottieni_tutti_componenti()
+    tickers_list = list(mappa_titoli.keys())
     t = Ticker(tickers_list, asynchronous=True)
     
     try:
@@ -219,9 +267,11 @@ def monitora_mercato():
                 if variazione is None or prezzo is None:
                     continue
                     
+                info_titolo = mappa_titoli.get(ticker, {"nome": ticker, "indice": "USA"})
                 all_data.append({
                     "ticker": ticker,
-                    "nome": ticker_nomi.get(ticker, ticker),
+                    "nome": info_titolo["nome"],
+                    "indice": info_titolo["indice"],
                     "variazione": variazione,
                     "prezzo": prezzo,
                     "market_cap": data_ticker.get("marketCap", 0)
@@ -258,8 +308,8 @@ def invia_report_vuoto(stato_mercato):
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
     tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
-    messaggio = f"🚨 {tipo_alert} MONITOR ({orario} NY) 🚨\n"
-    messaggio += f"Filtro: Tutti i 500 titoli S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
+    messaggio = f"🚨 USA MARKET {tipo_alert} MONITOR ({orario} NY) 🚨\n"
+    messaggio += f"Filtro: Titoli S&P 500 / Nasdaq-100 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
     messaggio += "___________________________________\n\n"
     messaggio += "ℹ️ Nessun titolo identificato\n"
     invia_a_telegram(messaggio)
@@ -268,12 +318,12 @@ def invia_report_telegram(df, stato_mercato):
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
     tipo_alert = "PRE-MARKET DUMP" if stato_mercato == "PRE_MARKET" else "MARKET DUMP"
-    messaggio = f"🚨 {tipo_alert} ALERT ({orario} NY) 🚨\n"
-    messaggio += f"Titoli in calo oltre il {abs(SOGLIA_PERDITA)}% ordinati per Market Cap:\n"
+    messaggio = f"🚨 US MARKETS {tipo_alert} ALERT ({orario} NY) 🚨\n"
+    messaggio += f"Titoli (S&P 500 / Nasdaq) in calo oltre il {abs(SOGLIA_PERDITA)}%:\n"
     messaggio += "___________________________________\n\n"
     for _, row in df.iterrows():
         cap_formattata = formatta_market_cap(row["market_cap"])
-        messaggio += f"🔹 {row['ticker']} | {row['nome']}\n"
+        messaggio += f"🔹 {row['ticker']} | {row['nome']} [{row['indice']}]\n"
         messaggio += f"📉 Variazione: {row['variazione']:.2f}%\n"
         messaggio += f"💵 Prezzo attuale: ${row['prezzo']:.2f}\n"
         messaggio += f"🏢 Market Cap: {cap_formattata}\n"

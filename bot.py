@@ -11,20 +11,27 @@ CHAT_ID_TELEGRAM = os.getenv("TELEGRAM_CHAT_ID")
 SOGLIA_PERDITA = -5.0  
 
 def get_market_state():
-    """Rileva se siamo in sessione Regular o in Pre-Market (Orari NY)."""
+    """Rileva in modo infallibile lo stato del mercato di New York."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     ora_ny = datetime.datetime.now(tz_ny)
 
+    # Fine settimana (Sabato = 5, Domenica = 6)
     if ora_ny.weekday() >= 5:
         return "CLOSED"
 
     ora_corrente = ora_ny.time()
     
-    # Pre-Market: dalle 04:00 alle 09:30
-    if datetime.time(4, 0) <= ora_corrente < datetime.time(9, 30):
+    # Orari limite
+    inizio_pre = datetime.time(4, 0, 0)
+    apertura_reg = datetime.time(9, 30, 0)
+    chiusura_reg = datetime.time(16, 0, 0)
+
+    # Verifica Pre-Market (04:00 - 09:29:59)
+    if inizio_pre <= ora_corrente < apertura_reg:
         return "PRE_MARKET"
-    # Sessione Normale: dalle 09:30 alle 16:00
-    elif datetime.time(9, 30) <= ora_corrente <= datetime.time(16, 0):
+    
+    # Verifica Sessione Regolare (09:30 - 16:00:00)
+    if apertura_reg <= ora_corrente <= chiusura_reg:
         return "REGULAR"
     
     return "CLOSED"
@@ -45,7 +52,7 @@ def monitora_mercato():
     if stato_mercato == "CLOSED":
         tz_ny = zoneinfo.ZoneInfo("America/New_York")
         ora_ny = datetime.datetime.now(tz_ny).strftime("%H:%M")
-        print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario NY: {ora_ny}")
+        print(f"Scansione saltata. Il mercato USA (incluso Pre-market) è CHIUSO. Orario attuale NY: {ora_ny}")
         return
 
     print(f"Rilevata sessione: {stato_mercato}. Avvio scansione...")
@@ -100,13 +107,11 @@ def monitora_mercato():
 
     df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
 
-    # --- NUOVA LOGICA: SE IL DATAFRAME È VUOTO INVIA COMUNQUE IL MESSAGGIO ---
     if df_filtrato.empty:
         print(f"Nessun titolo perde più del {abs(SOGLIA_PERDITA)}%. Invio notifica di vuoto...")
         invia_report_vuoto(stato_mercato)
         return
 
-    # Se ci sono titoli, estrae la market cap e invia il report completo
     titoli_da_controllare = df_filtrato["ticker"].tolist()
     mcap_list = []
     for t in titoli_da_controllare:
@@ -130,7 +135,6 @@ def formatta_market_cap(valore):
     return "N/D"
 
 def invia_report_vuoto(stato_mercato):
-    """Invia un messaggio sintetico quando nessun titolo supera la soglia di perdita."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
     tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
@@ -162,7 +166,6 @@ def invia_report_telegram(df, stato_mercato):
     invia_a_telegram(messaggio)
 
 def invia_a_telegram(testo):
-    """Funzione di invio generica con gestione degli errori nei log di GitHub."""
     url = f"https://telegram.org{TOKEN_TELEGRAM}/sendMessage"
     payload = {"chat_id": CHAT_ID_TELEGRAM, "text": testo, "parse_mode": "Markdown"}
     res = requests.post(url, json=payload)

@@ -160,53 +160,55 @@ def formatta_market_cap(valore):
     return "N/D"
 
 def invia_report_vuoto(stato_mercato):
+    """Genera il report vuoto usando tag HTML sicuri."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
     tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
     
-    messaggio = f"🚨 *{tipo_alert} MONITOR ({orario} NY)* 🚨\n"
+    messaggio = f"🚨 <b>{tipo_alert} MONITOR ({orario} NY)</b> 🚨\n"
     messaggio += f"Filtro: Top 50 S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
     messaggio += "___________________________________\n\n"
-    messaggio += "ℹ️ *Nessun titolo identificato*\n"
+    messaggio += "ℹ️ <i>Nessun titolo identificato</i>\n"
     
     invia_a_telegram(messaggio)
 
 def invia_report_telegram(df, stato_mercato):
+    """Genera il report completo usando tag HTML sicuri."""
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
     tipo_alert = "PRE-MARKET DUMP" if stato_mercato == "PRE_MARKET" else "MARKET DUMP"
     
-    messaggio = f"🚨 *{tipo_alert} ALERT ({orario} NY)* 🚨\n"
+    messaggio = f"🚨 <b>{tipo_alert} ALERT ({orario} NY)</b> 🚨\n"
     messaggio += f"Titoli in calo oltre il {abs(SOGLIA_PERDITA)}% ordinati per Market Cap:\n"
     messaggio += "___________________________________\n\n"
 
     for _, row in df.iterrows():
         cap_formattata = formatta_market_cap(row["market_cap"])
-        messaggio += f"🔹 *{row['ticker']}* | {row['nome']}\n"
-        messaggio += f"📉 *Variazione:* `{row['variazione']:.2f}%`\n"
-        messaggio += f"💵 *Prezzo attuale:* `${row['prezzo']:.2f}`\n"
-        messaggio += f"🏢 *Market Cap:* `{cap_formattata}`\n"
+        messaggio += f"🔹 <b>{row['ticker']}</b> | {row['nome']}\n"
+        messaggio += f"📉 <b>Variazione:</b> <code>{row['variazione']:.2f}%</code>\n"
+        messaggio += f"💵 <b>Prezzo attuale:</b> <code>${row['prezzo']:.2f}</code>\n"
+        messaggio += f"🏢 <b>Market Cap:</b> <code>{cap_formattata}</code>\n"
         messaggio += "-----------------------------------\n"
 
     invia_a_telegram(messaggio)
 
 def invia_a_telegram(testo):
-    """Costruisce l'URL dinamicamente per aggirare i falsi blocchi del mascheramento di GitHub."""
+    """Funzione di invio con parse_mode impostato su HTML per la massima stabilità."""
     t_token = str(TOKEN_TELEGRAM).strip()
     c_id = str(CHAT_ID_TELEGRAM).strip()
     
-    # Frammentiamo i pezzi dell'indirizzo così GitHub non riconosce la stringa censurata nei log
     parti_url = ["https://", "api.", "telegram", ".org", "/bot", t_token, "/sendMessage"]
     url_completo = "".join(parti_url)
     
-    payload = {"chat_id": c_id, "text": testo, "parse_mode": "Markdown"}
+    # parse_mode HTML elimina i bug legati a caratteri speciali di testo come trattini bassi o parentesi
+    payload = {"chat_id": c_id, "text": testo, "parse_mode": "HTML"}
     
     try:
         res = requests.post(url_completo, json=payload)
         if res.status_code != 200:
-            print(f"Risposta server: {res.status_code}")
+            print(f"Risposta server Telegram (Errore): {res.status_code} - {res.text}")
         else:
-            print("Esecuzione completata correttamente.")
+            print("Esecuzione completata correttamente. Messaggio inviato!")
     except Exception as e:
         print(f"Errore di invio: {e}")
 

@@ -3,3 +3,4 @@ requests
 yfinance
 lxml
 tzdata
+html5lib

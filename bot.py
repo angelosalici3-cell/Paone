@@ -31,8 +31,10 @@ def get_market_state():
 
 def ottieni_componenti_sp500():
     url = "https://wikipedia.org"
-    tables = pd.read_html(url)
-    df = tables[0]
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    req = requests.get(url, headers=headers)
+    tables = pd.read_html(req.text)
+    df = tables
     ticker_nomi = dict(zip(df["Symbol"], df["Security"]))
     tickers = [t.replace(".", "-") for t in df["Symbol"].tolist()]
     return tickers, ticker_nomi
@@ -41,26 +43,45 @@ def monitora_mercato():
     stato_mercato = get_market_state()
     
     if stato_mercato == "CLOSED":
-        print("Scansione saltata. Il mercato USA (incluso Pre-market) è CHIUSO.")
+        tz_ny = zoneinfo.ZoneInfo("America/New_York")
+        ora_ny = datetime.datetime.now(tz_ny).strftime("%H:%M")
+        print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario NY: {ora_ny}")
         return
 
     print(f"Rilevata sessione: {stato_mercato}. Avvio scansione...")
     tickers, ticker_nomi = ottieni_componenti_sp500()
 
-    # NOTA: prepost=True permette di scaricare le quotazioni del pre-market e dell'after-hours
-    dati_mercato = yf.download(tickers, period="2d", group_by="ticker", threads=True, progress=False, prepost=True)
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+
+    dati_mercato = yf.download(
+        tickers, 
+        period="2d", 
+        group_by="ticker", 
+        threads=True, 
+        progress=False, 
+        prepost=True,
+        session=session  
+    )
+
+    if dati_mercato.empty:
+        print("ERRORE: Yahoo Finance ha restituito un DataFrame vuoto. Probabile blocco IP.")
+        return
 
     all_data = []
     for t in tickers:
         try:
+            if t not in dati_mercato.columns.levels:
+                continue
+                
             ticker_data = dati_mercato[t]
             if len(ticker_data) >= 2:
                 prezzo_ieri = ticker_data["Close"].iloc[-2]
-                
-                # Se siamo in pre-market prendiamo l'ultimissimo prezzo disponibile (Open/Close instabili)
-                # yfinance popola l'ultima riga con i dati pre-market se prepost=True
                 prezzo_attuale = ticker_data["Close"].iloc[-1] 
                 
+                if pd.isna(prezzo_ieri) or pd.isna(prezzo_attuale) or prezzo_ieri == 0:
+                    continue
+                    
                 variazione = ((prezzo_attuale - prezzo_ieri) / prezzo_ieri) * 100
 
                 all_data.append({
@@ -73,20 +94,25 @@ def monitora_mercato():
             continue
 
     df_risultati = pd.DataFrame(all_data)
-    df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
-
-    if df_filtrato.empty:
-        print("Nessun titolo supera la soglia di perdita.")
+    if df_risultati.empty:
+        print("Nessun dato valido estratto dai ticker.")
         return
 
-    # Ottieni capitalizzazione per i titoli filtrati
-    titoli_da_controllare = df_filtrato["ticker"].tolist()
-    tickers_info = yf.Tickers(" ".join(titoli_da_controllare))
+    df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
 
+    # --- NUOVA LOGICA: SE IL DATAFRAME È VUOTO INVIA COMUNQUE IL MESSAGGIO ---
+    if df_filtrato.empty:
+        print(f"Nessun titolo perde più del {abs(SOGLIA_PERDITA)}%. Invio notifica di vuoto...")
+        invia_report_vuoto(stato_mercato)
+        return
+
+    # Se ci sono titoli, estrae la market cap e invia il report completo
+    titoli_da_controllare = df_filtrato["ticker"].tolist()
     mcap_list = []
     for t in titoli_da_controllare:
         try:
-            mcap = tickers_info.tickers[t].info.get("marketCap", 0)
+            ticker_info = yf.Ticker(t, session=session)
+            mcap = ticker_info.info.get("marketCap", 0)
         except Exception:
             mcap = 0
         mcap_list.append(mcap)
@@ -100,13 +126,25 @@ def monitora_mercato():
 def formatta_market_cap(valore):
     if valore >= 1e12: return f"${valore / 1e12:.1f}T"
     elif valore >= 1e9: return f"${valore / 1e9:.1f}B"
+    elif valore >= 1e6: return f"${valore / 1e6:.1f}M"
     return "N/D"
+
+def invia_report_vuoto(stato_mercato):
+    """Invia un messaggio sintetico quando nessun titolo supera la soglia di perdita."""
+    tz_ny = zoneinfo.ZoneInfo("America/New_York")
+    orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
+    tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
+    
+    messaggio = f"🚨 *{tipo_alert} MONITOR ({orario} NY)* 🚨\n"
+    messaggio += f"Filtro: Titoli S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
+    messaggio += "___________________________________\n\n"
+    messaggio += "ℹ️ *Nessun titolo identificato*\n"
+    
+    invia_a_telegram(messaggio)
 
 def invia_report_telegram(df, stato_mercato):
     tz_ny = zoneinfo.ZoneInfo("America/New_York")
     orario = datetime.datetime.now(tz_ny).strftime("%H:%M")
-    
-    # Cambia il titolo in base al momento della giornata
     tipo_alert = "PRE-MARKET DUMP" if stato_mercato == "PRE_MARKET" else "MARKET DUMP"
     
     messaggio = f"🚨 *{tipo_alert} ALERT ({orario} NY)* 🚨\n"
@@ -121,10 +159,17 @@ def invia_report_telegram(df, stato_mercato):
         messaggio += f"🏢 *Market Cap:* `{cap_formattata}`\n"
         messaggio += "-----------------------------------\n"
 
+    invia_a_telegram(messaggio)
+
+def invia_a_telegram(testo):
+    """Funzione di invio generica con gestione degli errori nei log di GitHub."""
     url = f"https://telegram.org{TOKEN_TELEGRAM}/sendMessage"
-    payload = {"chat_id": CHAT_ID_TELEGRAM, "text": messaggio, "parse_mode": "Markdown"}
-    requests.post(url, json=payload)
-    print("Report inviato con successo su Telegram.")
+    payload = {"chat_id": CHAT_ID_TELEGRAM, "text": testo, "parse_mode": "Markdown"}
+    res = requests.post(url, json=payload)
+    if res.status_code != 200:
+        print(f"ERRORE TELEGRAM: {res.status_code} - {res.text}")
+    else:
+        print("Messaggio inviato correttamente su Telegram.")
 
 if __name__ == "__main__":
     monitora_mercato()

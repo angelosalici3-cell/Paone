@@ -1,7 +1,6 @@
 import os
 import datetime
 import zoneinfo
-import io
 import pandas as pd
 import requests
 import yfinance as yf
@@ -34,17 +33,13 @@ def get_market_state():
     return "CLOSED"
 
 def ottieni_componenti_sp500():
-    """Scarica i componenti dello S&P 500 aggirando i warning di Pandas."""
-    url = "https://wikipedia.org"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    req = requests.get(url, headers=headers)
+    """Scarica i componenti dello S&P 500 da una sorgente dati CSV alternativa e stabile."""
+    # Sorgente CSV alternativa affidabile e aggiornata dei componenti S&P 500
+    url = "https://githubusercontent.com"
+    df = pd.read_csv(url)
     
-    # Utilizziamo StringIO per evitare il FutureWarning di Pandas nelle nuove versioni
-    html_buffer = io.StringIO(req.text)
-    tables = pd.read_html(html_buffer, flavor='html5lib')
-    
-    df = tables[0]
-    ticker_nomi = dict(zip(df["Symbol"], df["Security"]))
+    # Mappa i simboli e i nomi aziendali (il CSV usa la colonna 'Symbol' e 'Name')
+    ticker_nomi = dict(zip(df["Symbol"], df["Name"]))
     tickers = [t.replace(".", "-") for t in df["Symbol"].tolist()]
     return tickers, ticker_nomi
 
@@ -80,7 +75,7 @@ def monitora_mercato():
     all_data = []
     for t in tickers:
         try:
-            if t not in dati_mercato.columns.levels[0]:
+            if t not in dati_mercato.columns.levels:
                 continue
                 
             ticker_data = dati_mercato[t]

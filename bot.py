@@ -20,6 +20,7 @@ def get_market_state():
 
     ora_corrente = ora_ny.time()
     
+    # Sessioni operative (orari NY)
     inizio_pre = datetime.time(4, 0, 0)
     apertura_reg = datetime.time(9, 30, 0)
     chiusura_reg = datetime.time(16, 0, 0)
@@ -100,10 +101,8 @@ def monitora_mercato():
     print(f"Rilevata sessione: {stato_mercato}. Avvio scansione con YahooQuery...")
     tickers_list, ticker_nomi = ottieni_componenti_locali()
 
-    # Inizializza il client YahooQuery per i 50 titoli
     t = Ticker(tickers_list, asynchronous=True)
     
-    # Recupera i dati sui prezzi in tempo reale (incluso pre-market)
     try:
         quotes = t.quotes
     except Exception as e:
@@ -119,16 +118,13 @@ def monitora_mercato():
         data_ticker = quotes.get(ticker)
         if isinstance(data_ticker, dict):
             try:
-                # Seleziona la variazione percentuale corretta in base alla sessione
                 if stato_mercato == "PRE_MARKET":
-                    # Usa i dati del premarket se disponibili, altrimenti la variazione regolare corrente
                     variazione = data_ticker.get("preMarketChangePercent", data_ticker.get("regularMarketChangePercent", 0))
                     prezzo = data_ticker.get("preMarketPrice", data_ticker.get("regularMarketPrice", 0))
                 else:
                     variazione = data_ticker.get("regularMarketChangePercent", 0)
                     prezzo = data_ticker.get("regularMarketPrice", 0)
 
-                # Salta dati non validi
                 if variazione is None or prezzo is None:
                     continue
 
@@ -147,7 +143,6 @@ def monitora_mercato():
         print("Nessun dato utile estratto dai titoli.")
         return
 
-    # Filtra per titoli che superano la soglia di perdita (es. -5.0%)
     df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
 
     if df_filtrato.empty:
@@ -155,7 +150,6 @@ def monitora_mercato():
         invia_report_vuoto(stato_mercato)
         return
 
-    # Ordina per capitalizzazione decrescente
     df_final = df_filtrato.sort_values(by=["market_cap", "variazione"], ascending=[False, True])
     invia_report_telegram(df_final, stato_mercato)
 
@@ -198,13 +192,22 @@ def invia_report_telegram(df, stato_mercato):
     invia_a_telegram(messaggio)
 
 def invia_a_telegram(testo):
-    url = f"https://telegram.org{TOKEN_TELEGRAM}/sendMessage"
-    payload = {"chat_id": CHAT_ID_TELEGRAM, "text": testo, "parse_mode": "Markdown"}
-    res = requests.post(url, json=payload)
-    if res.status_code != 200:
-        print(f"ERRORE TELEGRAM: {res.status_code} - {res.text}")
-    else:
-        print("Messaggio inviato correttamente su Telegram.")
+    """Funzione con pulizia automatica delle stringhe di configurazione."""
+    # Rimuove in modo forzato asterischi, spazi o virgolette residue dai segreti
+    token_pulito = str(TOKEN_TELEGRAM).replace("*", "").replace(" ", "").strip()
+    chat_id_pulito = str(CHAT_ID_TELEGRAM).replace("*", "").replace(" ", "").strip()
+    
+    url = f"https://telegram.org{token_pulito}/sendMessage"
+    payload = {"chat_id": chat_id_pulito, "text": testo, "parse_mode": "Markdown"}
+    
+    try:
+        res = requests.post(url, json=payload)
+        if res.status_code != 200:
+            print(f"ERRORE TELEGRAM API: {res.status_code} - {res.text}")
+        else:
+            print("Messaggio inviato correttamente su Telegram.")
+    except Exception as e:
+        print(f"Errore di connessione durante l'invio a Telegram: {e}")
 
 if __name__ == "__main__":
     monitora_mercato()

@@ -3,7 +3,7 @@ import datetime
 import zoneinfo
 import pandas as pd
 import requests
-import yfinance as yf
+from yahooquery import Ticker
 
 # --- CONFIGURAZIONE ---
 TOKEN_TELEGRAM = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -20,7 +20,6 @@ def get_market_state():
 
     ora_corrente = ora_ny.time()
     
-    # Sessioni operative (orari NY)
     inizio_pre = datetime.time(4, 0, 0)
     apertura_reg = datetime.time(9, 30, 0)
     chiusura_reg = datetime.time(16, 0, 0)
@@ -34,8 +33,7 @@ def get_market_state():
     return "CLOSED"
 
 def ottieni_componenti_locali():
-    """Restituisce i principali colossi dello S&P 500 salvati localmente nel codice."""
-    # Lista pre-mappata delle aziende a più alta capitalizzazione per evitare errori di rete
+    """Restituisce i principali colossi dello S&P 500 salvati localmente."""
     ticker_nomi = {
         "MSFT": "Microsoft Corporation",
         "AAPL": "Apple Inc.",
@@ -75,7 +73,7 @@ def ottieni_componenti_locali():
         "ACN": "Accenture plc",
         "INTC": "Intel Corporation",
         "LIN": "Linde plc",
-        "ABV": "AbbVie Inc.",
+        "ABBV": "AbbVie Inc.",
         "MCD": "McDonald's Corporation",
         "GE": "General Electric Company",
         "DIS": "The Walt Disney Company",
@@ -96,63 +94,60 @@ def monitora_mercato():
     if stato_mercato == "CLOSED":
         tz_ny = zoneinfo.ZoneInfo("America/New_York")
         ora_ny = datetime.datetime.now(tz_ny).strftime("%H:%M")
-        print(f"Scansione saltata. Il mercato USA (incluso Pre-market) è CHIUSO. Orario attuale NY: {ora_ny}")
+        print(f"Scansione saltata. Il mercato USA è CHIUSO. Orario attuale NY: {ora_ny}")
         return
 
-    print(f"Rilevata sessione: {stato_mercato}. Avvio scansione...")
-    tickers, ticker_nomi = ottieni_componenti_locali()
+    print(f"Rilevata sessione: {stato_mercato}. Avvio scansione con YahooQuery...")
+    tickers_list, ticker_nomi = ottieni_componenti_locali()
 
-    session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+    # Inizializza il client YahooQuery per i 50 titoli
+    t = Ticker(tickers_list, asynchronous=True)
+    
+    # Recupera i dati sui prezzi in tempo reale (incluso pre-market)
+    try:
+        quotes = t.quotes
+    except Exception as e:
+        print(f"ERRORE nel recupero dati dalle API: {e}")
+        return
 
-    print(f"Download dati per {len(tickers)} mega-cap...")
-    dati_mercato = yf.download(
-        tickers, 
-        period="2d", 
-        group_by="ticker", 
-        threads=True, 
-        progress=False, 
-        prepost=True,
-        session=session  
-    )
-
-    if dati_mercato.empty:
-        print("ERRORE: Yahoo Finance ha restituito un DataFrame vuoto.")
+    if not quotes or len(quotes) == 0:
+        print("ERRORE: Risposta vuota dalle API dei prezzi.")
         return
 
     all_data = []
-    # Gestione compatibile sia per ticker singoli che per multi-index
-    colonne_disponibili = dati_mercato.columns.levels[0] if isinstance(dati_mercato.columns, pd.MultiIndex) else [dati_mercato.columns[0]]
+    for ticker in tickers_list:
+        data_ticker = quotes.get(ticker)
+        if isinstance(data_ticker, dict):
+            try:
+                # Seleziona la variazione percentuale corretta in base alla sessione
+                if stato_mercato == "PRE_MARKET":
+                    # Usa i dati del premarket se disponibili, altrimenti la variazione regolare corrente
+                    variazione = data_ticker.get("preMarketChangePercent", data_ticker.get("regularMarketChangePercent", 0))
+                    prezzo = data_ticker.get("preMarketPrice", data_ticker.get("regularMarketPrice", 0))
+                else:
+                    variazione = data_ticker.get("regularMarketChangePercent", 0)
+                    prezzo = data_ticker.get("regularMarketPrice", 0)
 
-    for t in tickers:
-        try:
-            if t not in colonne_disponibili:
-                continue
-                
-            ticker_data = dati_mercato[t]
-            if len(ticker_data) >= 2:
-                prezzo_ieri = ticker_data["Close"].iloc[-2]
-                prezzo_attuale = ticker_data["Close"].iloc[-1] 
-                
-                if pd.isna(prezzo_ieri) or pd.isna(prezzo_attuale) or prezzo_ieri == 0:
+                # Salta dati non validi
+                if variazione is None or prezzo is None:
                     continue
-                    
-                variazione = ((prezzo_attuale - prezzo_ieri) / prezzo_ieri) * 100
 
                 all_data.append({
-                    "ticker": t,
-                    "nome": ticker_nomi.get(t, t),
+                    "ticker": ticker,
+                    "nome": ticker_nomi.get(ticker, ticker),
                     "variazione": variazione,
-                    "prezzo": prezzo_attuale,
+                    "prezzo": prezzo,
+                    "market_cap": data_ticker.get("marketCap", 0)
                 })
-        except Exception as e:
-            continue
+            except Exception:
+                continue
 
     df_risultati = pd.DataFrame(all_data)
     if df_risultati.empty:
-        print("Nessun dato valido estratto dai ticker.")
+        print("Nessun dato utile estratto dai titoli.")
         return
 
+    # Filtra per titoli che superano la soglia di perdita (es. -5.0%)
     df_filtrato = df_risultati[df_risultati["variazione"] <= SOGLIA_PERDITA]
 
     if df_filtrato.empty:
@@ -160,23 +155,12 @@ def monitora_mercato():
         invia_report_vuoto(stato_mercato)
         return
 
-    titoli_da_controllare = df_filtrato["ticker"].tolist()
-    mcap_list = []
-    for t in titoli_da_controllare:
-        try:
-            ticker_info = yf.Ticker(t, session=session)
-            mcap = ticker_info.info.get("marketCap", 0)
-        except Exception:
-            mcap = 0
-        mcap_list.append(mcap)
-
-    df_filtrato = df_filtrato.copy()
-    df_filtrato["market_cap"] = mcap_list
-
+    # Ordina per capitalizzazione decrescente
     df_final = df_filtrato.sort_values(by=["market_cap", "variazione"], ascending=[False, True])
     invia_report_telegram(df_final, stato_mercato)
 
 def formatta_market_cap(valore):
+    if not valore: return "N/D"
     if valore >= 1e12: return f"${valore / 1e12:.1f}T"
     elif valore >= 1e9: return f"${valore / 1e9:.1f}B"
     elif valore >= 1e6: return f"${valore / 1e6:.1f}M"

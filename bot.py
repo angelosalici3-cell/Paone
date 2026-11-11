@@ -20,6 +20,7 @@ def get_market_state():
 
     ora_corrente = ora_ny.time()
     
+    # Sessioni operative (orari NY)
     inizio_pre = datetime.time(4, 0, 0)
     apertura_reg = datetime.time(9, 30, 0)
     chiusura_reg = datetime.time(16, 0, 0)
@@ -32,16 +33,62 @@ def get_market_state():
     
     return "CLOSED"
 
-def ottieni_componenti_sp500():
-    """Scarica i componenti dello S&P 500 da una sorgente dati CSV alternativa e stabile."""
-    # Sorgente CSV alternativa affidabile e aggiornata dei componenti S&P 500
-    url = "https://githubusercontent.com"
-    df = pd.read_csv(url)
-    
-    # Mappa i simboli e i nomi aziendali (il CSV usa la colonna 'Symbol' e 'Name')
-    ticker_nomi = dict(zip(df["Symbol"], df["Name"]))
-    tickers = [t.replace(".", "-") for t in df["Symbol"].tolist()]
-    return tickers, ticker_nomi
+def ottieni_componenti_locali():
+    """Restituisce i principali colossi dello S&P 500 salvati localmente nel codice."""
+    # Lista pre-mappata delle aziende a più alta capitalizzazione per evitare errori di rete
+    ticker_nomi = {
+        "MSFT": "Microsoft Corporation",
+        "AAPL": "Apple Inc.",
+        "NVDA": "NVIDIA Corporation",
+        "AMZN": "Amazon.com, Inc.",
+        "META": "Meta Platforms, Inc.",
+        "GOOGL": "Alphabet Inc. (Class A)",
+        "GOOG": "Alphabet Inc. (Class C)",
+        "BRK-B": "Berkshire Hathaway Inc.",
+        "LLY": "Eli Lilly and Company",
+        "AVGO": "Broadcom Inc.",
+        "JPM": "JPMorgan Chase & Co.",
+        "TSLA": "Tesla, Inc.",
+        "UNH": "UnitedHealth Group Inc.",
+        "V": "Visa Inc.",
+        "XOM": "Exxon Mobil Corporation",
+        "MA": "Mastercard Incorporated",
+        "HD": "The Home Depot, Inc.",
+        "PG": "Procter & Gamble Company",
+        "COST": "Costco Wholesale Corporation",
+        "JNJ": "Johnson & Johnson",
+        "AMD": "Advanced Micro Devices, Inc.",
+        "NFLX": "Netflix, Inc.",
+        "MRK": "Merck & Co., Inc.",
+        "ORCL": "Oracle Corporation",
+        "BAC": "Bank of America Corporation",
+        "CVX": "Chevron Corporation",
+        "CRM": "Salesforce, Inc.",
+        "WMT": "Walmart Inc.",
+        "PEP": "PepsiCo, Inc.",
+        "KO": "The Coca-Cola Company",
+        "ADBE": "Adobe Inc.",
+        "TMO": "Thermo Fisher Scientific Inc.",
+        "CSCO": "Cisco Systems, Inc.",
+        "QCOM": "QUALCOMM Incorporated",
+        "WFC": "Wells Fargo & Company",
+        "ACN": "Accenture plc",
+        "INTC": "Intel Corporation",
+        "LIN": "Linde plc",
+        "ABV": "AbbVie Inc.",
+        "MCD": "McDonald's Corporation",
+        "GE": "General Electric Company",
+        "DIS": "The Walt Disney Company",
+        "CMCSA": "Comcast Corporation",
+        "VZ": "Verizon Communications Inc.",
+        "INTU": "Intuit Inc.",
+        "NOW": "ServiceNow, Inc.",
+        "TXN": "Texas Instruments Incorporated",
+        "AMAT": "Applied Materials, Inc.",
+        "BKNG": "Booking Holdings Inc.",
+        "AXP": "American Express Company"
+    }
+    return list(ticker_nomi.keys()), ticker_nomi
 
 def monitora_mercato():
     stato_mercato = get_market_state()
@@ -53,11 +100,12 @@ def monitora_mercato():
         return
 
     print(f"Rilevata sessione: {stato_mercato}. Avvio scansione...")
-    tickers, ticker_nomi = ottieni_componenti_sp500()
+    tickers, ticker_nomi = ottieni_componenti_locali()
 
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
 
+    print(f"Download dati per {len(tickers)} mega-cap...")
     dati_mercato = yf.download(
         tickers, 
         period="2d", 
@@ -69,13 +117,16 @@ def monitora_mercato():
     )
 
     if dati_mercato.empty:
-        print("ERRORE: Yahoo Finance ha restituito un DataFrame vuoto. Probabile blocco IP.")
+        print("ERRORE: Yahoo Finance ha restituito un DataFrame vuoto.")
         return
 
     all_data = []
+    # Gestione compatibile sia per ticker singoli che per multi-index
+    colonne_disponibili = dati_mercato.columns.levels[0] if isinstance(dati_mercato.columns, pd.MultiIndex) else [dati_mercato.columns[0]]
+
     for t in tickers:
         try:
-            if t not in dati_mercato.columns.levels:
+            if t not in colonne_disponibili:
                 continue
                 
             ticker_data = dati_mercato[t]
@@ -90,11 +141,11 @@ def monitora_mercato():
 
                 all_data.append({
                     "ticker": t,
-                    "nome": ticker_nomi.get(t.replace("-", "."), t),
+                    "nome": ticker_nomi.get(t, t),
                     "variazione": variazione,
                     "prezzo": prezzo_attuale,
                 })
-        except Exception:
+        except Exception as e:
             continue
 
     df_risultati = pd.DataFrame(all_data)
@@ -137,7 +188,7 @@ def invia_report_vuoto(stato_mercato):
     tipo_alert = "PRE-MARKET" if stato_mercato == "PRE_MARKET" else "MARKET"
     
     messaggio = f"🚨 *{tipo_alert} MONITOR ({orario} NY)* 🚨\n"
-    messaggio += f"Filtro: Titoli S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
+    messaggio += f"Filtro: Top 50 S&P 500 in calo oltre il {abs(SOGLIA_PERDITA)}%\n"
     messaggio += "___________________________________\n\n"
     messaggio += "ℹ️ *Nessun titolo identificato*\n"
     
